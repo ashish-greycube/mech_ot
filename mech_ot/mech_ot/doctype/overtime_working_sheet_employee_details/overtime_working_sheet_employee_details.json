@@ -1,0 +1,89 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-11-12 15:43:15.864139",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "employee_name",
+  "department",
+  "designation",
+  "column_break_qhgu",
+  "ot_total_hours",
+  "ot_rate",
+  "ot_amount"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Employee",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name"
+  },
+  {
+   "fetch_from": "employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Department",
+   "options": "Department"
+  },
+  {
+   "fetch_from": "employee.designation",
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Designation",
+   "options": "Designation"
+  },
+  {
+   "fieldname": "column_break_qhgu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "ot_total_hours",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "OT Total Hours",
+   "precision": "2"
+  },
+  {
+   "fieldname": "ot_rate",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "OT Rate",
+   "precision": "2"
+  },
+  {
+   "fieldname": "ot_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "OT Amount",
+   "precision": "2"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-11-14 17:19:35.803866",
+ "modified_by": "Administrator",
+ "module": "Mech OT",
+ "name": "Overtime Working Sheet Employee Details",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

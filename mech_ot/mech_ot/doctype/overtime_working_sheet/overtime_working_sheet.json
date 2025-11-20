@@ -1,0 +1,166 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "OWS-.#####",
+ "creation": "2025-11-12 15:24:17.669993",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_g2yi",
+  "posting_date",
+  "company",
+  "column_break_spbi",
+  "frequency",
+  "start_date",
+  "end_date",
+  "amended_from",
+  "section_break_yiis",
+  "branch",
+  "department",
+  "fetch_employee",
+  "column_break_eygo",
+  "designation",
+  "grade",
+  "section_break_nvvd",
+  "overtime_working_sheet_employee_details"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_g2yi",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Overtime Working Sheet",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Posting Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "column_break_spbi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "frequency",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Frequency",
+   "options": "Monthly\nFortnightly\nBimonthly\nWeekly\nDaily",
+   "reqd": 1
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Start Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "End Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_yiis",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department"
+  },
+  {
+   "fieldname": "fetch_employee",
+   "fieldtype": "Button",
+   "label": "Fetch Employee"
+  },
+  {
+   "fieldname": "column_break_eygo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "label": "Designation",
+   "options": "Designation"
+  },
+  {
+   "fieldname": "grade",
+   "fieldtype": "Link",
+   "label": "Grade",
+   "options": "Employee Grade"
+  },
+  {
+   "fieldname": "section_break_nvvd",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "overtime_working_sheet_employee_details",
+   "fieldtype": "Table",
+   "label": "Overtime Working Sheet Employee Details",
+   "options": "Overtime Working Sheet Employee Details",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [
+  {
+   "link_doctype": "Additional Salary",
+   "link_fieldname": "ref_docname"
+  }
+ ],
+ "modified": "2025-11-17 10:19:05.929991",
+ "modified_by": "Administrator",
+ "module": "Mech OT",
+ "name": "Overtime Working Sheet",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
