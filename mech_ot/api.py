@@ -1,6 +1,6 @@
 import frappe
 from frappe import _
-from frappe.utils import flt, cstr, add_to_date, time_diff_in_seconds, get_datetime, formatdate
+from frappe.utils import flt, cstr, add_to_date, time_diff_in_seconds, get_datetime, formatdate, get_link_to_form
 
 
 def calculate_ot_hours_and_amount(doc, method):
@@ -22,7 +22,7 @@ def calculate_ot_hours_and_amount(doc, method):
     doc.custom_difference_of_working_hours = flt(doc.working_hours) - flt(actual_working_hours)
 
     # Calculate Overtime Hours
-    if eligible_for_ot and doc.working_hours > actual_working_hours:
+    if eligible_for_ot and doc.working_hours and doc.working_hours > actual_working_hours:
         if doc.out_time and shift_end_time:
             out_time = get_datetime(doc.out_time)
             shift_end_datetime = get_datetime(cstr(formatdate(doc.attendance_date)) + " " + cstr(shift_end_time))
@@ -30,15 +30,21 @@ def calculate_ot_hours_and_amount(doc, method):
             end_time_allowed_for_overtime = add_to_date(shift_end_datetime,minutes=minimum_duration_for_overtime)
             print(end_time_allowed_for_overtime,"-----------",shift_end_datetime)
 
+            rounding_min_threshold_for_05_hr = frappe.db.get_single_value("Mech OT Settings", "rounding_min_threshold_for_05_hr") or 0
+            rounding_min_threshold_for_1_hr = frappe.db.get_single_value("Mech OT Settings", "rounding_min_threshold_for_1_hr") or 0
+
+            if rounding_min_threshold_for_05_hr == 0 or rounding_min_threshold_for_1_hr == 0:
+                frappe.throw(_("Please set Rounding Thresholds in {0}".format(get_link_to_form("Mech OT Settings","Mech OT Settings"))))
+
             if out_time >= end_time_allowed_for_overtime:
                 overtime_duration = time_diff_in_seconds(out_time , shift_end_datetime)
                 doc.custom_actual_extra_working_hours = flt(overtime_duration) / 3600
                 working_hours, remaining_working_seconds = divmod(overtime_duration, 3600)
                 remaining_working_minutes = remaining_working_seconds / 60
 
-                if remaining_working_minutes > 15 and remaining_working_minutes <= 45:
+                if remaining_working_minutes > rounding_min_threshold_for_05_hr and remaining_working_minutes <= rounding_min_threshold_for_1_hr:
                     working_hours += 0.5
-                elif remaining_working_minutes > 45:
+                elif remaining_working_minutes > rounding_min_threshold_for_1_hr:
                     working_hours += 1
                 
                 doc.custom_rounded_extra_working_hours = flt(working_hours,2)

@@ -5,7 +5,9 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "overtime_earning_component"
+  "overtime_earning_component",
+  "rounding_min_threshold_for_05_hr",
+  "rounding_min_threshold_for_1_hr"
  ],
  "fields": [
   {
@@ -15,13 +17,27 @@
    "label": "Overtime Earning Component",
    "options": "Salary Component",
    "reqd": 1
+  },
+  {
+   "fieldname": "rounding_min_threshold_for_05_hr",
+   "fieldtype": "Int",
+   "label": "Rounding min threshold for 0.5 hr",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "rounding_min_threshold_for_1_hr",
+   "fieldtype": "Int",
+   "label": "Rounding min threshold for 1 hr",
+   "non_negative": 1,
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-11-19 09:33:13.607453",
+ "modified": "2025-11-21 15:35:11.008453",
  "modified_by": "Administrator",
  "module": "Mech OT",
  "name": "Mech OT Settings",
