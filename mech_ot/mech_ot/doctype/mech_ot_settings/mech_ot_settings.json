@@ -6,6 +6,8 @@
  "engine": "InnoDB",
  "field_order": [
   "overtime_earning_component",
+  "multiplication_factor",
+  "column_break_trmt",
   "rounding_min_threshold_for_05_hr",
   "rounding_min_threshold_for_1_hr"
  ],
@@ -31,13 +33,24 @@
    "label": "Rounding min threshold for 1 hr",
    "non_negative": 1,
    "reqd": 1
+  },
+  {
+   "fieldname": "multiplication_factor",
+   "fieldtype": "Float",
+   "label": "Multiplication Factor",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_trmt",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-11-21 15:35:11.008453",
+ "modified": "2025-11-21 16:33:53.829114",
  "modified_by": "Administrator",
  "module": "Mech OT",
  "name": "Mech OT Settings",
