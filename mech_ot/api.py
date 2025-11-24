@@ -25,7 +25,7 @@ def calculate_ot_hours_and_amount(doc, method):
     if eligible_for_ot and doc.working_hours and doc.working_hours > actual_working_hours:
         if doc.out_time and shift_end_time:
             out_time = get_datetime(doc.out_time)
-            shift_end_datetime = get_datetime(cstr(formatdate(doc.attendance_date)) + " " + cstr(shift_end_time))
+            shift_end_datetime = get_datetime(cstr((doc.attendance_date)) + " " + cstr(shift_end_time))
             minimum_duration_for_overtime = frappe.db.get_value("Shift Type",doc.shift,"custom_minimum_duration_for_overtime") or 0
             end_time_allowed_for_overtime = add_to_date(shift_end_datetime,minutes=minimum_duration_for_overtime)
             print(end_time_allowed_for_overtime,"-----------",shift_end_datetime)
