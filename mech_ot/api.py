@@ -66,7 +66,7 @@ def calculate_ot_hours_and_amount(doc, method):
 
         # Calculate Overtime Amount
         month_last_day = frappe.utils.get_last_day(doc.attendance_date).day
-        multiplication_factor_for_ot = frappe.db.get_single_value("Mech OT Settings", "multiplication_factor_for_ot") or 0
+        multiplication_factor_for_ot = frappe.db.get_single_value("Mech OT Settings", "multiplication_factor") or 0
         ot_rate = gross_pay / month_last_day / actual_working_hours * multiplication_factor_for_ot
         ot_amount = doc.custom_rounded_extra_working_hours * ot_rate
 
