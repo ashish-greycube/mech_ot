@@ -43,7 +43,7 @@ app_license = "mit"
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {"Holiday List" : "public/js/holiday_list.js"}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -74,10 +74,13 @@ app_license = "mit"
 # ----------
 
 # add methods and filters to jinja environment
-# jinja = {
-# 	"methods": "mech_ot.utils.jinja_methods",
-# 	"filters": "mech_ot.utils.jinja_filters"
-# }
+jinja = {
+	"methods": [
+        "mech_ot.jinja.get_fixed_component_values", 
+        "mech_ot.jinja.get_leave_balance_of_employee", 
+        "mech_ot.jinja.get_overtime_hours"
+    ],
+}
 
 # Installation
 # ------------
@@ -139,9 +142,16 @@ app_license = "mit"
 
 doc_events = {
 	"Attendance": {
-		"before_insert": "mech_ot.api.calculate_ot_hours_and_amount"
+		"before_insert": "mech_ot.api.calculate_ot_hours_and_amount",
+        "on_submit": "mech_ot.api.create_compensatory_leave_for_elgible_employees_attendance"
 	}
 }
+
+# After Migrate Hooks
+after_migrate = [
+    "mech_ot.migrate.after_migrate"
+]
+
 
 # Scheduled Tasks
 # ---------------

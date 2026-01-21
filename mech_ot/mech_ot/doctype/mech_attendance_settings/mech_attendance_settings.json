@@ -1,0 +1,86 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-01-15 15:41:53.446146",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "html_knwb",
+  "section_break_afzd",
+  "default_compensatory_off_leave_type",
+  "minimum_hours_required_for_half_day_compensatory_off",
+  "column_break_gnff",
+  "employee_category",
+  "minimum_hours_required_for_full_day_compensatory_off"
+ ],
+ "fields": [
+  {
+   "fieldname": "default_compensatory_off_leave_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Default Compensatory Off Leave Type",
+   "link_filters": "[[\"Leave Type\",\"is_compensatory\",\"=\",1]]",
+   "options": "Leave Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_gnff",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "employee_category",
+   "fieldtype": "Link",
+   "label": "Employee Category",
+   "options": "Employee Category",
+   "reqd": 1
+  },
+  {
+   "fieldname": "minimum_hours_required_for_half_day_compensatory_off",
+   "fieldtype": "Int",
+   "label": "Minimum Hours Required For Half Day Compensatory Off",
+   "reqd": 1
+  },
+  {
+   "fieldname": "minimum_hours_required_for_full_day_compensatory_off",
+   "fieldtype": "Int",
+   "label": "Minimum Hours Required For Full Day Compensatory Off",
+   "reqd": 1
+  },
+  {
+   "fieldname": "html_knwb",
+   "fieldtype": "HTML",
+   "options": "<p>For the creation of Compensatory Leave must check for the below conditions:</p>\n<ol>\n\t<li><b>Mark Auto Attendance on Holidays</b> Must Be Checked in Shift Type. </li>\n\t<li>Create <b>Leave Period</b> For Creating Compensatory Leave Request.</li>\n</ol>",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_afzd",
+   "fieldtype": "Section Break"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-01-16 11:34:03.976100",
+ "modified_by": "Administrator",
+ "module": "Mech OT",
+ "name": "Mech Attendance Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
