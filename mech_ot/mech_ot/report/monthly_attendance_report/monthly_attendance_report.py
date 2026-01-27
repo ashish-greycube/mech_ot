@@ -4,6 +4,7 @@
 import frappe
 import erpnext
 from frappe import _
+import datetime
 from frappe.utils import cint, cstr, getdate
 from frappe.utils.nestedset import get_descendants_of
 from frappe.query_builder.functions import Extract
@@ -25,6 +26,12 @@ def get_columns(filters):
 			'label' : _('Employee'),
 			'options' : 'Employee',
 			'width' : 300,
+		},
+		{
+			'fieldname' : 'employee_name',
+			'fieldtype' : 'Data',
+			'label' : _('Employee Name'),
+			'width' : 180,
 		},
 		{
 			'fieldname' : 'detail',
@@ -69,6 +76,12 @@ def get_columns(filters):
 			'label' : _('Total Days Absent'),
 			'width' : 150,
 		},
+		{
+			'fieldname' : 'total_ot_hours',
+			'fieldtype' : 'Data',
+			'label' : _('Total OT Hours'),
+			'width' : 150,
+		},
 	])
 
 	leaves = frappe.db.get_all(
@@ -77,6 +90,8 @@ def get_columns(filters):
 		pluck = "name",
 		order_by = "name DESC"
 	)
+	casual = leaves.remove("Casual Leave")
+	leaves.insert(0, "Casual Leave")
 	
 	for leave in leaves:
 		columns.append({
@@ -97,9 +112,9 @@ def get_columns(filters):
 
 def get_filtered_data(filters, report_rows):
 	filtered_data = []
-	if filters.get("shift") and filters.get('employee') and  filters.get("department"):
+	if filters.get("shift") and filters.get('employee') and  filters.get("department") and filters.get("category"):
 		for rr in report_rows:
-			if (rr['shift'] == filters.get("shift")) and (('employee' in rr and rr['employee'] == filters.get("employee")) or ('hidden_employee' in rr and rr['hidden_employee'] == filters.get("employee"))) and (rr['department'] == filters.get("department")):
+			if (rr['shift'] == filters.get("shift")) and (('employee' in rr and rr['employee'] == filters.get("employee")) or ('hidden_employee' in rr and rr['hidden_employee'] == filters.get("employee"))) and (rr['department'] == filters.get("department")) and rr['category'] == filters.get("category"):
 				filtered_data.append(rr)
 		return filtered_data
 
@@ -109,9 +124,21 @@ def get_filtered_data(filters, report_rows):
 				filtered_data.append(rr)
 		return filtered_data
 	
+	if filters.get("category") and filters.get('employee'):
+		for rr in report_rows:
+			if (rr['category'] == filters.get("category")) and ('employee' in rr and rr['employee'] == filters.get("employee")) or ('hidden_employee' in rr and rr['hidden_employee'] == filters.get("employee")):
+				filtered_data.append(rr)
+		return filtered_data
+	
 	if filters.get("shift") and filters.get('department'):
 		for rr in report_rows:
 			if (rr['shift'] == filters.get("shift")) and (rr['department'] == filters.get("department")):
+				filtered_data.append(rr)
+		return filtered_data
+	
+	if filters.get("shift") and filters.get('category'):
+		for rr in report_rows:
+			if (rr['shift'] == filters.get("shift")) and (rr['category'] == filters.get("category")):
 				filtered_data.append(rr)
 		return filtered_data
 	
@@ -138,6 +165,13 @@ def get_filtered_data(filters, report_rows):
 			if rr['department'] == filters.get("department"):
 				filtered_data.append(rr)
 		return filtered_data
+	
+	if filters.get("category"):
+		for rr in report_rows:
+			if rr['category'] == filters.get("category"):
+				filtered_data.append(rr)
+		return filtered_data
+
 
 def get_monthly_attendance_sheet_report_data(filters):
 	ref_filters = frappe._dict({
@@ -486,7 +520,6 @@ def get_data(filters):
 
 	# For Each Employee Finding Daywise Map + Assigning Status 
 	for d in data:
-		print(d)
 		for col in d:
 			if col in ['shift', 'employee', 'employee_name']:
 				continue
@@ -531,6 +564,7 @@ def get_data(filters):
 	# Converting Report Data Into Rows By Detail Type
 	report_rows = []
 	for out in report_output:
+		category = frappe.db.get_value("Employee", out, "custom_category") if out != None else ""
 		sts_row = {
 			'total' : 0,
 			'employee':out, 
@@ -540,16 +574,19 @@ def get_data(filters):
 			'employee_name':report_output[out][0]['employee_name'], 
 			'total_days_present' : 0,
 			'total_days_absent' : 0,
-			'total_days_on_leave': 0
+			'total_days_on_leave': 0,
+			'category': category,
+			'total_ot_hours' : 0
 		}
 
 		in_row = {
 			'hidden_employee':out, 
-			'employee_name':report_output[out][0]['employee_name'],  
+			# 'employee_name':report_output[out][0]['employee_name'],  
 			'detail': 'In Time', 
 			'shift' :report_output[out][0]['shift'], 
 			'department' :report_output[out][0]['department'], 
-			"indent": 1
+			"indent": 1,
+			'category': category
 		}
 
 		out_row = {
@@ -557,7 +594,8 @@ def get_data(filters):
 			'detail': 'Out Time', 
 			'shift' : report_output[out][0]['shift'], 
 			'department' :report_output[out][0]['department'], 
-			"indent": 1
+			"indent": 1,
+			'category': category
 		}
 
 		hrs_row = {
@@ -566,7 +604,8 @@ def get_data(filters):
 			'shift' : report_output[out][0]['shift'], 
 			'department' :report_output[out][0]['department'], 
 			'total' : 0, 
-			"indent": 1
+			"indent": 1,
+			'category': category
 		}
 
 		ot_row = {
@@ -575,7 +614,8 @@ def get_data(filters):
 			'shift' : report_output[out][0]['shift'], 
 			'department' :report_output[out][0]['department'], 
 			"indent": 1,
-			'total' : 0	
+			'total' : 0	,
+			'category': category
 		}
 
 		late_checkin_row = {
@@ -583,7 +623,8 @@ def get_data(filters):
 			'detail': 'Late Check in By', 
 			'shift' : report_output[out][0]['shift'], 
 			'department' :report_output[out][0]['department'], 
-			"indent": 1
+			"indent": 1,
+			'category': category
 		}
 
 		early_exit_row = {
@@ -591,20 +632,35 @@ def get_data(filters):
 			'detail': 'Early Exit By', 
 			'shift' : report_output[out][0]['shift'], 
 			'department' :report_output[out][0]['department'], 
-			"indent": 1
+			"indent": 1,
+			'category': category
 		}
 
 		# Adding Days Attendance Time & Status
 		day = 1
 		for d in report_output[out]:
 			# Updating In Time Row
-			in_row[day] = frappe.format(d['in_time'], "Time") if d['in_time'] != "-" else "-"
+			if d['in_time'] is not None:
+				if d['in_time'] != "-":
+					in_row[day] = d['in_time'].strftime("%H:%M")
+			else:
+				in_row[day] = "-" if d['in_time'] is None else d['in_time']
 			
 			# Updating Out Time Row
-			out_row[day] = frappe.format(d['out_time'], "Time") if d['out_time'] != "-" else "-"
+			if d['out_time'] is not None:
+				if d['out_time'] != "-":
+					out_row[day] = d['out_time'].strftime("%H:%M")
+			else:
+				out_row[day] =  "-" if d['out_time'] is None else d['out_time']
 
 			# Updating Total Hours Row
-			hrs_row[day] = d['working_hours']
+			total_working_seconds = 0
+			if d['working_hours']:
+				working_hours = int(d['working_hours'])
+				working_minute = (d['working_hours'] - working_hours) * 100
+				total_working_seconds = (working_hours * 3600) + (working_minute * 60)
+			formatted_duration = frappe.utils.format_duration(total_working_seconds)
+			hrs_row[day] = formatted_duration or d['working_hours']
 			hrs_row['total'] = round(hrs_row['total'] + d['working_hours'], 2)
 
 			# Updating Status Row
@@ -631,6 +687,7 @@ def get_data(filters):
 					total_leaves = total_leaves + x.count
 			sts_row['total_days_on_leave'] = total_leaves
 
+			sts_row['total_ot_hours'] = sts_row['total_ot_hours'] + (d['custom_rounded_extra_working_hours'] if 'custom_rounded_extra_working_hours' in d else 0)
 			# Updating Over Time Row
 			ot_row[day] = d['custom_rounded_extra_working_hours'] if 'custom_rounded_extra_working_hours' in d else 0
 			ot_row['total'] = ot_row['total'] + (d['custom_rounded_extra_working_hours'] if 'custom_rounded_extra_working_hours' in d else 0)
