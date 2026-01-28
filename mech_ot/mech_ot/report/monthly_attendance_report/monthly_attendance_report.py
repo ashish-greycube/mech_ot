@@ -82,6 +82,18 @@ def get_columns(filters):
 			'label' : _('Total OT Hours'),
 			'width' : 150,
 		},
+		{
+			'fieldname' : 'total_weekly_off',
+			'fieldtype' : 'Data',
+			'label' : _('Total Weekly Off'),
+			'width' : 150,
+		},
+		{
+			'fieldname' : 'total_holidays',
+			'fieldtype' : 'Data',
+			'label' : _('Total Holidays'),
+			'width' : 150,
+		},
 	])
 
 	leaves = frappe.db.get_all(
@@ -106,6 +118,13 @@ def get_columns(filters):
 		'fieldtype' : 'Data',
 		'label' : "Total Days On Leave",
 		'width' : 180,
+	})
+
+	columns.append({
+		'fieldname' : "total_paid_days",
+		'fieldtype' : 'Data',
+		'label' : "Total Paid Days",
+		'width' : 120,
 	})
 
 	return columns
@@ -576,7 +595,10 @@ def get_data(filters):
 			'total_days_absent' : 0,
 			'total_days_on_leave': 0,
 			'category': category,
-			'total_ot_hours' : 0
+			'total_ot_hours' : 0,
+			'total_weekly_off': 0,
+			'total_holidays': 0,
+			'total_paid_days': 0,
 		}
 
 		in_row = {
@@ -638,6 +660,8 @@ def get_data(filters):
 
 		# Adding Days Attendance Time & Status
 		day = 1
+		total_days = 0
+		total_absent_days = 0
 		for d in report_output[out]:
 			# Updating In Time Row
 			if d['in_time'] is not None:
@@ -664,7 +688,11 @@ def get_data(filters):
 			hrs_row['total'] = round(hrs_row['total'] + d['working_hours'], 2)
 
 			# Updating Status Row
+
+			# ------ Attendance Status ------
 			sts_row[day] = d['status']
+			total_days = total_days + 1
+			total_absent_days = total_absent_days + (1 if d['status'] in ["A", "L"] else 0)
 			if d['status'] in ["P", "WFH"]:
 				sts_row['total'] = sts_row['total'] + 1 
 				sts_row['total_days_present'] = sts_row['total_days_present'] + 1 
@@ -674,6 +702,7 @@ def get_data(filters):
 			elif d['status'] in ["A", "L"]:
 				sts_row['total_days_absent'] = sts_row['total_days_absent'] + 1
 
+			# ------ No of Leaves Taken By Leave Type ------
 			for leave in leaves:
 				colname = leave.replace(" ", "_").lower()
 				sts_row[colname] = 0
@@ -687,7 +716,15 @@ def get_data(filters):
 					total_leaves = total_leaves + x.count
 			sts_row['total_days_on_leave'] = total_leaves
 
+			# ------ Total Overtime Hours ------
 			sts_row['total_ot_hours'] = sts_row['total_ot_hours'] + (d['custom_rounded_extra_working_hours'] if 'custom_rounded_extra_working_hours' in d else 0)
+			
+			# ------ Weekly Off Days ------
+			sts_row['total_weekly_off'] = sts_row['total_weekly_off'] + (1 if d['status'] == "WO" else 0)
+
+			# ------ Holiday Days ------
+			sts_row['total_holidays'] = sts_row['total_holidays'] + (1 if d['status'] == "H" else 0)
+
 			# Updating Over Time Row
 			ot_row[day] = d['custom_rounded_extra_working_hours'] if 'custom_rounded_extra_working_hours' in d else 0
 			ot_row['total'] = ot_row['total'] + (d['custom_rounded_extra_working_hours'] if 'custom_rounded_extra_working_hours' in d else 0)
@@ -712,6 +749,7 @@ def get_data(filters):
 			day = day + 1
 
 		# Appending Rows In Final Data
+		sts_row['total_paid_days'] = total_days - total_absent_days
 		report_rows.append(sts_row)
 		report_rows.append(in_row)
 		report_rows.append(out_row)
