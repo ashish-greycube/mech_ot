@@ -94,6 +94,18 @@ def get_columns(filters):
 			'label' : _('Total Holidays'),
 			'width' : 150,
 		},
+		{
+			'fieldname' : 'total_holidays_present',
+			'fieldtype' : 'Data',
+			'label' : _('Total Holidays Present'),
+			'width' : 150,
+		},
+		{
+			'fieldname' : 'total_weekoff_present',
+			'fieldtype' : 'Data',
+			'label' : _('Total Week Off Present'),
+			'width' : 150,
+		},
 	])
 
 	leaves = frappe.db.get_all(
@@ -599,6 +611,8 @@ def get_data(filters):
 			'total_weekly_off': 0,
 			'total_holidays': 0,
 			'total_paid_days': 0,
+			'total_holidays_present': 0,
+			'total_weekoff_present': 0,
 		}
 
 		in_row = {
@@ -662,7 +676,23 @@ def get_data(filters):
 		day = 1
 		total_days = 0
 		total_absent_days = 0
+		attendance_month_holidays = []
+		attendance_month_holidays_map = {}
 		for d in report_output[out]:
+				
+			# Change Status To HP Or WOP If Present On Holiday Or Weekend.
+			current_emp = None
+			if d['employee'] != current_emp:
+				current_emp = d['employee']
+				attendance_month_holidays, attendance_month_holidays_map = get_holidays_of_this_month(current_emp, filters.get("from_date"), filters.get("to_date"))
+				if attendance_month_holidays and attendance_month_holidays_map:
+					if 'attendance_date' in d and d['attendance_date'] in attendance_month_holidays and d['status'] == "P":
+						d['status'] = "WOP" if attendance_month_holidays_map[d['attendance_date']] == 1 else "HP"
+			else:
+				if attendance_month_holidays and attendance_month_holidays_map:
+					if 'attendance_date' in  d['attendance_date'] in attendance_month_holidays and d['status'] == "P":
+						d['status'] = "WOP" if attendance_month_holidays_map[d['attendance_date']] == 1 else "HP"
+
 			# Updating In Time Row
 			if d['in_time'] is not None:
 				if d['in_time'] != "-":
@@ -701,6 +731,10 @@ def get_data(filters):
 				sts_row['total_days_present'] = sts_row['total_days_present'] + 0.5
 			elif d['status'] in ["A", "L"]:
 				sts_row['total_days_absent'] = sts_row['total_days_absent'] + 1
+			elif d['status'] == "HP":
+				sts_row['total_holidays_present'] = sts_row['total_holidays_present'] + 1
+			elif d['status'] == "WOP":
+				sts_row['total_weekoff_present'] = sts_row['total_weekoff_present'] + 1
 
 			# ------ No of Leaves Taken By Leave Type ------
 			for leave in leaves:
@@ -767,3 +801,16 @@ def get_data(filters):
 
 	# Return Final Data
 	return report_rows
+
+def get_holidays_of_this_month(emp, from_date, to_date):
+	leave_date_type_map = {}
+	leave_dates = []
+	if emp:
+		employee_holiday_list = frappe.db.get_value("Employee", emp, "holiday_list")
+		if employee_holiday_list:
+			doc = frappe.get_doc("Holiday List", employee_holiday_list)
+			for holiday in doc.holidays:
+				if holiday.holiday_date >= frappe.utils.getdate(from_date) and holiday.holiday_date <= frappe.utils.getdate(to_date):
+					leave_dates.append(holiday.holiday_date)
+					leave_date_type_map[holiday.holiday_date] = holiday.weekly_off
+	return leave_dates, leave_date_type_map

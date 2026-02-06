@@ -76,6 +76,9 @@ frappe.query_reports["Monthly Attendance Report"] = {
 		else if (value && ["H", "WO"].includes(value)) {
 			value = `<span style="color:orange;">${value}</span>`
 		}
+		else if (value && ["WOP", "HP"].includes(value)) {
+			value = `<span style="color:brown;">${value}</span>`
+		}
 		return value;
 	},
 };
