@@ -579,7 +579,7 @@ def get_data(filters):
 			if d['employee']+ "-" +col in employee_times_map:
 				attendance_dict = employee_times_map[d['employee']+ "-" +col]
 			else:
-				attendance_date = f"{frappe.utils.getdate(filters.get("to_date")).strftime("%Y")}-{frappe.utils.getdate(filters.get("to_date")).strftime("%m")}-{col}"
+				attendance_date = "{0}-{1}-{2}".format(frappe.utils.getdate(filters.get("to_date")).strftime("%Y"), frappe.utils.getdate(filters.get("to_date")).strftime("%m"), col)
 				at = frappe.db.get_value("Attendance", {
 						"employee" : d['employee'],
 						"attendance_date": attendance_date
