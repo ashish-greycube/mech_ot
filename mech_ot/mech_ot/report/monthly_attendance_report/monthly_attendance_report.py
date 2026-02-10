@@ -49,7 +49,7 @@ def get_columns(filters):
 		day = frappe.utils.cint(frappe.utils.getdate(frappe.utils.add_to_date(filters.get('from_date'), days=day)).strftime("%d"))
 		
 		col = {
-			'fieldname' : i,
+			'fieldname' : frappe.utils.cstr(i),
 			'fieldtype' : 'Data',
 			'label' : "{0} {1}".format(day, dayname),
 			'width' : 100,
@@ -540,7 +540,7 @@ def get_data(filters):
 	start_date =  filters.get('from_date')
 
 	employee_times = frappe.db.sql("""
-		select employee , in_time , out_time , late_entry , early_exit , working_hours , attendance_date, shift, department, employee_name, custom_rounded_extra_working_hours
+		select employee , in_time , out_time , late_entry , early_exit , working_hours , attendance_date, shift, department, employee_name, custom_rounded_extra_working_hours, status
 		from tabAttendance ta 
 		where attendance_date between %s and %s
 		order by employee
@@ -548,7 +548,7 @@ def get_data(filters):
 
 	for d in employee_times:
 		employee_times_map[d['employee']+ "-" +str(int(frappe.utils.getdate(d['attendance_date']).strftime('%d')))] = d
-
+	print(employee_times_map)
 	# For Each Employee Finding Daywise Map + Assigning Status 
 	for d in data:
 		for col in d:
@@ -575,7 +575,40 @@ def get_data(filters):
 				alternate_status = "A"
 			else:
 				alternate_status = ""
-			d[col] = employee_times_map[d['employee']+ "-" +col] if d['employee']+ "-" +col in employee_times_map else no_attendance_dict
+			attendance_dict = {}	
+			if d['employee']+ "-" +col in employee_times_map:
+				attendance_dict = employee_times_map[d['employee']+ "-" +col]
+			else:
+				attendance_date = f"{frappe.utils.getdate(filters.get("to_date")).strftime("%Y")}-{frappe.utils.getdate(filters.get("to_date")).strftime("%m")}-{col}"
+				at = frappe.db.get_value("Attendance", {
+						"employee" : d['employee'],
+						"attendance_date": attendance_date
+					}, ["name"])
+				if frappe.utils.getdate(attendance_date) < frappe.utils.getdate(filters.get("to_date")):
+					at = frappe.db.get_value("Attendance", {
+						"employee" : d['employee'],
+						"attendance_date": attendance_date
+					}, ["name"])
+					if at:
+						doc = frappe.get_doc("Attendance", at)
+						if doc:
+							attendance_dict = {
+								"employee": doc.employee,
+								"in_time": doc.in_time,
+								"out_time": doc.out_time,
+								"late_entry": doc.late_entry,
+								"early_exit": doc.early_exit,
+								"working_hours": doc.working_hours,
+								"shift" : doc.shift,
+								"department" : doc.department
+							}
+
+			# d[col] = employee_times_map[d['employee']+ "-" +col] if d['employee']+ "-" +col in employee_times_map else no_attendance_dict
+			d[col] = attendance_dict if attendance_dict != {} else no_attendance_dict
+			if 'status' in attendance_dict and attendance_dict.status == "Present":
+				st = "P"
+				if status != st:
+					status = st
 			d[col]['status'] = status or alternate_status
 
 	# Converting Data Into Employee Wise Dict
@@ -682,7 +715,8 @@ def get_data(filters):
 				
 			# Change Status To HP Or WOP If Present On Holiday Or Weekend.
 			current_emp = None
-			if d['employee'] != current_emp:
+			# print(d)
+			if 'employee' in d and d['employee'] != current_emp:
 				current_emp = d['employee']
 				attendance_month_holidays, attendance_month_holidays_map = get_holidays_of_this_month(current_emp, filters.get("from_date"), filters.get("to_date"))
 				if attendance_month_holidays and attendance_month_holidays_map:
@@ -690,7 +724,7 @@ def get_data(filters):
 						d['status'] = "WOP" if attendance_month_holidays_map[d['attendance_date']] == 1 else "HP"
 			else:
 				if attendance_month_holidays and attendance_month_holidays_map:
-					if 'attendance_date' in  d['attendance_date'] in attendance_month_holidays and d['status'] == "P":
+					if 'attendance_date' in d and d['attendance_date'] in attendance_month_holidays and d['status'] == "P":
 						d['status'] = "WOP" if attendance_month_holidays_map[d['attendance_date']] == 1 else "HP"
 
 			# Updating In Time Row
