@@ -629,12 +629,13 @@ def get_data(filters):
 	report_rows = []
 	for out in report_output:
 		category = frappe.db.get_value("Employee", out, "custom_category") if out != None else ""
+		department = frappe.db.get_value("Employee", out, "department")
 		sts_row = {
 			'total' : 0,
 			'employee':out, 
 			'detail': 'Status', 
 			'shift' : report_output[out][0]['shift'], 
-			'department' :report_output[out][0]['department'], 
+			'department' :report_output[out][0]['department'] or department, 
 			'employee_name':report_output[out][0]['employee_name'], 
 			'total_days_present' : 0,
 			'total_days_absent' : 0,
@@ -653,7 +654,7 @@ def get_data(filters):
 			# 'employee_name':report_output[out][0]['employee_name'],  
 			'detail': 'In Time', 
 			'shift' :report_output[out][0]['shift'], 
-			'department' :report_output[out][0]['department'], 
+			'department' :report_output[out][0]['department'] or department, 
 			"indent": 1,
 			'category': category
 		}
@@ -662,7 +663,7 @@ def get_data(filters):
 			'hidden_employee':out, 
 			'detail': 'Out Time', 
 			'shift' : report_output[out][0]['shift'], 
-			'department' :report_output[out][0]['department'], 
+			'department' :report_output[out][0]['department'] or department, 
 			"indent": 1,
 			'category': category
 		}
@@ -671,7 +672,7 @@ def get_data(filters):
 			'hidden_employee':out, 
 			'detail': 'Total Hrs', 
 			'shift' : report_output[out][0]['shift'], 
-			'department' :report_output[out][0]['department'], 
+			'department' :report_output[out][0]['department'] or department, 
 			'total' : 0, 
 			"indent": 1,
 			'category': category
@@ -681,7 +682,7 @@ def get_data(filters):
 			'hidden_employee':out, 
 			'detail': 'OT Hrs', 
 			'shift' : report_output[out][0]['shift'], 
-			'department' :report_output[out][0]['department'], 
+			'department' :report_output[out][0]['department'] or department, 
 			"indent": 1,
 			'total' : 0	,
 			'category': category
@@ -691,7 +692,7 @@ def get_data(filters):
 			'hidden_employee':out, 
 			'detail': 'Late Check in By', 
 			'shift' : report_output[out][0]['shift'], 
-			'department' :report_output[out][0]['department'], 
+			'department' :report_output[out][0]['department'] or department, 
 			"indent": 1,
 			'category': category
 		}
@@ -700,7 +701,7 @@ def get_data(filters):
 			'hidden_employee':out, 
 			'detail': 'Early Exit By', 
 			'shift' : report_output[out][0]['shift'], 
-			'department' :report_output[out][0]['department'], 
+			'department' :report_output[out][0]['department'] or department, 
 			"indent": 1,
 			'category': category
 		}
@@ -748,6 +749,9 @@ def get_data(filters):
 				working_minute = (d['working_hours'] - working_hours) * 100
 				total_working_seconds = (working_hours * 3600) + (working_minute * 60)
 			formatted_duration = frappe.utils.format_duration(total_working_seconds)
+			index_of_min = formatted_duration.find("m")
+			if index_of_min != -1:
+				formatted_duration = formatted_duration[:index_of_min+1]
 			hrs_row[day] = formatted_duration or d['working_hours']
 			hrs_row['total'] = round(hrs_row['total'] + d['working_hours'], 2)
 
@@ -771,6 +775,7 @@ def get_data(filters):
 				sts_row['total_weekoff_present'] = sts_row['total_weekoff_present'] + 1
 
 			# ------ No of Leaves Taken By Leave Type ------
+			leave_without_pay_days = 0
 			for leave in leaves:
 				colname = leave.replace(" ", "_").lower()
 				sts_row[colname] = 0
@@ -778,6 +783,8 @@ def get_data(filters):
 					for l in employee_leaves_map[d['employee']]:
 						if l.leave_type == leave:
 							sts_row[colname] = l.count
+						if l.leave_type == "Leave Without Pay":
+							leave_without_pay_days = l.count
 			total_leaves = 0
 			if employee_leaves_map[d['employee']] != []:
 				for x in employee_leaves_map[d['employee']]:
@@ -817,7 +824,14 @@ def get_data(filters):
 			day = day + 1
 
 		# Appending Rows In Final Data
-		sts_row['total_paid_days'] = total_days - total_absent_days
+		if sts_row['total_days_present'] > 0: 
+			if getdate(frappe.utils.today()) < getdate(filters.get("to_date")):
+				no_of_days = frappe.utils.date_diff(getdate(frappe.utils.today()), getdate(filters.get("from_date"))) + 1
+			else:
+				no_of_days = frappe.utils.date_diff(getdate(filters.get("to_date")), getdate(filters.get("from_date"))) + 1
+			sts_row['total_paid_days'] = no_of_days - total_absent_days 
+		else:
+			sts_row['total_paid_days'] = 0
 		report_rows.append(sts_row)
 		report_rows.append(in_row)
 		report_rows.append(out_row)
