@@ -808,7 +808,7 @@ def get_data(filters):
 			if d['late_entry'] == 1:
 				start_time = frappe.db.get_value("Shift Type", d['shift'], 'start_time')
 				time_difference = frappe.utils.time_diff(str(d['in_time']), f"{attendance_year}-{attendance_month}-{day} {start_time}")
-				late_checkin_row[day] = time_difference
+				late_checkin_row[day] = frappe.utils.get_time(time_difference).strftime("%H:%M")
 			else:
 				late_checkin_row[day] = "-"
 
@@ -816,7 +816,7 @@ def get_data(filters):
 			if d['early_exit'] == 1:
 				end_time = frappe.db.get_value("Shift Type", d['shift'], 'end_time')
 				time_difference = frappe.utils.time_diff(f"{attendance_year}-{attendance_month}-{day} {end_time}", str(d['out_time']))
-				early_exit_row[day] = time_difference
+				early_exit_row[day] = frappe.utils.get_time(time_difference).strftime("%H:%M")
 			else:
 				early_exit_row[day] = "-"
 
