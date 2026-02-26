@@ -34,6 +34,13 @@ def get_columns(filters):
 			'width' : 180,
 		},
 		{
+			'fieldname' : 'branch',
+			'fieldtype' : 'Link',
+			'label' : _('Branch'),
+			'width' : 120,
+			'options': "Branch",
+		},
+		{
 			'fieldname' : 'detail',
 			'fieldtype' : 'Data',
 			'label' : _('Detail Type'),
@@ -143,65 +150,44 @@ def get_columns(filters):
 
 def get_filtered_data(filters, report_rows):
 	filtered_data = []
-	if filters.get("shift") and filters.get('employee') and  filters.get("department") and filters.get("category"):
-		for rr in report_rows:
-			if (rr['shift'] == filters.get("shift")) and (('employee' in rr and rr['employee'] == filters.get("employee")) or ('hidden_employee' in rr and rr['hidden_employee'] == filters.get("employee"))) and (rr['department'] == filters.get("department")) and rr['category'] == filters.get("category"):
-				filtered_data.append(rr)
-		return filtered_data
 
-	if filters.get("shift") and filters.get('employee'):
-		for rr in report_rows:
-			if (rr['shift'] == filters.get("shift")) and ('employee' in rr and rr['employee'] == filters.get("employee")) or ('hidden_employee' in rr and rr['hidden_employee'] == filters.get("employee")):
-				filtered_data.append(rr)
-		return filtered_data
-	
-	if filters.get("category") and filters.get('employee'):
-		for rr in report_rows:
-			if (rr['category'] == filters.get("category")) and ('employee' in rr and rr['employee'] == filters.get("employee")) or ('hidden_employee' in rr and rr['hidden_employee'] == filters.get("employee")):
-				filtered_data.append(rr)
-		return filtered_data
-	
-	if filters.get("shift") and filters.get('department'):
-		for rr in report_rows:
-			if (rr['shift'] == filters.get("shift")) and (rr['department'] == filters.get("department")):
-				filtered_data.append(rr)
-		return filtered_data
-	
-	if filters.get("shift") and filters.get('category'):
-		for rr in report_rows:
-			if (rr['shift'] == filters.get("shift")) and (rr['category'] == filters.get("category")):
-				filtered_data.append(rr)
-		return filtered_data
-	
-	if filters.get("employee") and filters.get('department'):
-		for rr in report_rows:
-			if ('employee' in rr and rr['employee'] == filters.get("employee")) or ('hidden_employee' in rr and rr['hidden_employee'] == filters.get("employee")) and (rr['department'] == filters.get("department")):
-				filtered_data.append(rr)
-		return filtered_data
+	for rr in report_rows:
+		match = True
 
-	if filters.get("shift"):
-		for rr in report_rows:
-			if rr['shift'] == filters.get("shift"):
-				filtered_data.append(rr)
-		return filtered_data
+		# Shift
+		if filters.get("shift") and rr.get("shift") != filters.get("shift"):
+			match = False
 
-	if filters.get('employee'):
-		for rr in report_rows:
-			if ('employee' in rr and rr['employee'] == filters.get("employee")) or ('hidden_employee' in rr and rr['hidden_employee'] == filters.get("employee")):
-				filtered_data.append(rr)
-		return filtered_data
-	
-	if filters.get("department"):
-		for rr in report_rows:
-			if rr['department'] == filters.get("department"):
-				filtered_data.append(rr)
-		return filtered_data
-	
-	if filters.get("category"):
-		for rr in report_rows:
-			if rr['category'] == filters.get("category"):
-				filtered_data.append(rr)
-		return filtered_data
+		# Department
+		if filters.get("department") and rr.get("department") != filters.get("department"):
+			match = False
+
+		# Category
+		if filters.get("category") and rr.get("category") != filters.get("category"):
+			match = False
+
+		# Employee (handle employee + hidden_employee)
+		if filters.get("employee"):
+			employee_match = (
+				rr.get("employee") == filters.get("employee")
+				or rr.get("hidden_employee") == filters.get("employee")
+			)
+			if not employee_match:
+				match = False
+
+		# Branch (handle branch + hidden_branch)
+		if filters.get("branch"):
+			branch_match = (
+				rr.get("branch") == filters.get("branch")
+				or rr.get("hidden_branch") == filters.get("branch")
+			)
+			if not branch_match:
+				match = False
+
+		if match:
+			filtered_data.append(rr)
+
+	return filtered_data
 
 
 def get_monthly_attendance_sheet_report_data(filters):
@@ -630,6 +616,7 @@ def get_data(filters):
 	for out in report_output:
 		category = frappe.db.get_value("Employee", out, "custom_category") if out != None else ""
 		department = frappe.db.get_value("Employee", out, "department")
+		branch = frappe.db.get_value("Employee", out, "branch") if out != None else ""
 		sts_row = {
 			'total' : 0,
 			'employee':out, 
@@ -647,6 +634,7 @@ def get_data(filters):
 			'total_paid_days': 0,
 			'total_holidays_present': 0,
 			'total_weekoff_present': 0,
+			'branch': branch or ""
 		}
 
 		in_row = {
@@ -656,7 +644,8 @@ def get_data(filters):
 			'shift' :report_output[out][0]['shift'], 
 			'department' :report_output[out][0]['department'] or department, 
 			"indent": 1,
-			'category': category
+			'category': category,
+			'hidden_branch': branch or ""
 		}
 
 		out_row = {
@@ -665,7 +654,8 @@ def get_data(filters):
 			'shift' : report_output[out][0]['shift'], 
 			'department' :report_output[out][0]['department'] or department, 
 			"indent": 1,
-			'category': category
+			'category': category,
+			'hidden_branch': branch or ""
 		}
 
 		hrs_row = {
@@ -675,7 +665,8 @@ def get_data(filters):
 			'department' :report_output[out][0]['department'] or department, 
 			'total' : 0, 
 			"indent": 1,
-			'category': category
+			'category': category,
+			'hidden_branch': branch or ""
 		}
 
 		ot_row = {
@@ -685,7 +676,8 @@ def get_data(filters):
 			'department' :report_output[out][0]['department'] or department, 
 			"indent": 1,
 			'total' : 0	,
-			'category': category
+			'category': category,
+			'hidden_branch': branch or ""
 		}
 
 		late_checkin_row = {
@@ -694,7 +686,8 @@ def get_data(filters):
 			'shift' : report_output[out][0]['shift'], 
 			'department' :report_output[out][0]['department'] or department, 
 			"indent": 1,
-			'category': category
+			'category': category,
+			'hidden_branch': branch or ""
 		}
 
 		early_exit_row = {
@@ -703,7 +696,8 @@ def get_data(filters):
 			'shift' : report_output[out][0]['shift'], 
 			'department' :report_output[out][0]['department'] or department, 
 			"indent": 1,
-			'category': category
+			'category': category,
+			'hidden_branch': branch or ""
 		}
 
 		# Adding Days Attendance Time & Status

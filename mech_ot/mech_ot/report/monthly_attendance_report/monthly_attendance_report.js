@@ -61,6 +61,12 @@ frappe.query_reports["Monthly Attendance Report"] = {
 			label: __('Category'),
 			options: '\nStaff\nWorker'
 		},
+		{
+			fieldname: 'branch',
+			fieldtype: 'Link',
+			label: __('Branch'),
+			options: 'Branch'
+		},
 	],
 
 	formatter: function (value, row, column, data, default_formatter, filter) {
