@@ -753,6 +753,15 @@ def get_data(filters):
 
 			# ------ Attendance Status ------
 			sts_row[day] = d['status']
+			if d['status'] == "L":
+				attendance_date = "{0}-{1}-{2}".format(frappe.utils.getdate(filters.get("to_date")).strftime("%Y"), frappe.utils.getdate(filters.get("to_date")).strftime("%m"), day)
+				leave_application = frappe.db.get_value("Leave Application", {"employee": d['employee'], "from_date": attendance_date}, "name")
+				if leave_application:
+					leave_type = frappe.db.get_value("Leave Application", leave_application, "leave_type")
+					if leave_type:
+						abbreviation = frappe.db.get_value("Leave Type", leave_type, "custom_abbreviation")
+						sts_row[day] = abbreviation
+						
 			total_days = total_days + 1
 			total_absent_days = total_absent_days + (1 if d['status'] in ["A", "L"] else 0)
 			if d['status'] in ["P", "WFH"]:

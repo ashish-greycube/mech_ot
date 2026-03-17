@@ -26,6 +26,18 @@ def after_migrate():
                 fieldname="custom_add_holidays_btn",
                 insert_after="custom_mech_weekoff"
             ),
+        ], 
+
+        "Leave Type" : [
+            dict(
+                is_custom_field=1,
+                is_system_generated=0,
+                fieldtype="Data",
+                label="Abbreviation",
+                fieldname="custom_abbreviation",
+                insert_after="max_continuous_days_allowed",
+                reqd=1
+            ),
         ]
     }
 

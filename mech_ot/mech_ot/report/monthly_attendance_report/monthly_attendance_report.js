@@ -85,6 +85,9 @@ frappe.query_reports["Monthly Attendance Report"] = {
 		else if (value && ["WOP", "HP"].includes(value)) {
 			value = `<span style="color:brown;">${value}</span>`
 		}
+		else if (row && (row[4].content == "Late Check in By" || row[4].content == "Early Exit By") && !["Late Check in By", "-", "Early Exit By"].includes(value)) {
+			value = `<span style="color:#670312;">${value}</span>`
+		}
 		return value;
 	},
 };
