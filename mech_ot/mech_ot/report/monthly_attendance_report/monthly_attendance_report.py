@@ -503,6 +503,8 @@ def get_leaves_counts_of_employees(filters):
 				WHERE from_date BETWEEN "{1}" AND "{0}"
 				AND to_date BETWEEN "{1}" AND "{0}"
 				AND employee = "{2}"
+				AND docstatus = "1"
+				AND status = "Approved"
 				GROUP BY leave_type
 				'''.format(filters.get("to_date"), filters.get("from_date"), employee), as_dict = 1
 			)
@@ -739,8 +741,10 @@ def get_data(filters):
 			# Updating Total Hours Row
 			total_working_seconds = 0
 			if d['working_hours']:
+				print( d['working_hours'], d['employee'])
 				working_hours = int(d['working_hours'])
-				working_minute = (d['working_hours'] - working_hours) * 100
+				working_minute_in_percentage_format = (d['working_hours'] - working_hours) * 100
+				working_minute = frappe.utils.cint(((working_minute_in_percentage_format*60)/100))
 				total_working_seconds = (working_hours * 3600) + (working_minute * 60)
 			formatted_duration = frappe.utils.format_duration(total_working_seconds)
 			index_of_min = formatted_duration.find("m")
