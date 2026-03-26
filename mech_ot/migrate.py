@@ -49,6 +49,16 @@ def after_migrate():
                 fieldname="custom_is_ot_applicable",
                 insert_after="provident_fund_account"
             ),
+            dict(
+                is_custom_field=1,
+                is_system_generated=0,
+                fieldtype="Link",
+                label="Category",
+                fieldname="custom_category",
+                options="Employee Category",
+                in_standard_filter=1,
+                insert_after="status"
+            ),
         ],
 
         "Shift Type": [
