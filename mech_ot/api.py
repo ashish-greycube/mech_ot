@@ -92,7 +92,7 @@ def get_holiday_list_for_employee(employee, shift, company):
 
 def create_compensatory_leave_for_elgible_employees_attendance(self, method=None):
     settings = frappe.get_doc("Mech Attendance Settings")
-    if self.employee and self.attendance_date and self.status == "Present":
+    if self.employee and self.attendance_date and self.status not in ["Absent", "On Leave"]:
         employee_holiday_list = get_holiday_list_for_employee(self.employee, self.shift, self.company)
 
         is_holiday_attendance = is_holiday(employee_holiday_list, self.attendance_date)
