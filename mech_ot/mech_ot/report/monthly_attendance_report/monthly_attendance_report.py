@@ -725,18 +725,34 @@ def get_data(filters):
 						d['status'] = "WOP" if attendance_month_holidays_map[d['attendance_date']] == 1 else "HP"
 
 			# Updating In Time Row
+			offshift_in = check_for_offshift_attendance(d['employee'], filters, day, "IN")
 			if d['in_time'] is not None:
 				if d['in_time'] != "-":
 					in_row[day] = d['in_time'].strftime("%H:%M")
+					if offshift_in['is_off_shift'] == True:
+						in_row[day] = offshift_in['logtime']
+						d['status'] = "OS"
 			else:
-				in_row[day] = "-" if d['in_time'] is None else d['in_time']
+				if d['in_time'] is None and offshift_in['is_off_shift'] == True:
+					in_row[day] = offshift_in['logtime']
+					d['status'] = "OS"
+				else:
+					in_row[day] = "-"
 			
 			# Updating Out Time Row
+			offshift_out = check_for_offshift_attendance(d['employee'], filters, day, "OUT")
 			if d['out_time'] is not None:
 				if d['out_time'] != "-":
 					out_row[day] = d['out_time'].strftime("%H:%M")
+					if offshift_out['is_off_shift'] == True:
+						out_row[day] = offshift_out['logtime']
+						d['status'] = "OS"
 			else:
-				out_row[day] =  "-" if d['out_time'] is None else d['out_time']
+				if d['out_time'] is None and offshift_out['is_off_shift'] == True:
+					out_row[day] = offshift_out['logtime']
+					d['status'] = "OS"
+				else:
+					out_row[day] = "-"
 
 			# Updating Total Hours Row
 			total_working_seconds = 0
@@ -869,3 +885,30 @@ def get_holidays_of_this_month(emp, from_date, to_date):
 					leave_dates.append(holiday.holiday_date)
 					leave_date_type_map[holiday.holiday_date] = holiday.weekly_off
 	return leave_dates, leave_date_type_map
+
+
+def check_for_offshift_attendance(employee, filters, day, logtype):
+	result = {
+		"is_off_shift" : False,
+		"logtime" : None
+	}
+	offshift_checkins = frappe.db.get_all("Employee Checkin", {"employee": employee, "offshift":1}, ["time"])
+	# print(offshift_checkins)
+	offshifts_date = []
+	if len(offshift_checkins) > 0:
+		offshifts_date = [(s.time).strftime("%Y-%m-%d") for s in offshift_checkins]
+	# print(offshifts_date)
+	attendance_date = "{0}-{1}-{2}".format(getdate(filters.get("to_date")).strftime("%Y"), getdate(filters.get("to_date")).strftime("%m"), day)
+
+	# print(attendance_date)
+	if attendance_date in offshifts_date:
+		log_datetime = frappe.db.get_all("Employee Checkin", {"employee": employee, "time":["between", [attendance_date, attendance_date]], "log_type": logtype}, ["time"])
+		# print(log_datetime)
+		if log_datetime != []:
+			log_time = log_datetime[0]['time'].strftime("%H:%M")
+			result.update({
+				"is_off_shift" : True,
+				"logtime" : log_time
+			})
+	# print(result)
+	return result
