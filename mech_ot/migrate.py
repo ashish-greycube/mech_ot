@@ -1,4 +1,6 @@
 import frappe
+from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+
 def after_migrate():
     custom_fields = {
         "Holiday List" : [
@@ -58,6 +60,16 @@ def after_migrate():
                 options="Employee Category",
                 in_standard_filter=1,
                 insert_after="status"
+            ),
+            dict(
+                is_custom_field=1,
+                is_system_generated=0,
+                fieldtype="Link",
+                label="Assigned Holiday List",
+                fieldname="custom_assigned_holiday_list",
+                options="Holiday List",
+                insert_after="default_shift",
+                read_only=1
             ),
         ],
 
@@ -165,7 +177,7 @@ def after_migrate():
         ]  
     }
 
-    print("Adding Custom Fields In Holiday List.....")
+    print("Adding Custom Fields In Core Doctypes.....")
     for dt, fields in custom_fields.items():
         print("********************\n %s: " % dt, [d.get("fieldname") for d in fields])
-    frappe.custom.doctype.custom_field.custom_field.create_custom_fields(custom_fields)
+    create_custom_fields(custom_fields)

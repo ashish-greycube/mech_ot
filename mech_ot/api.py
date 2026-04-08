@@ -167,3 +167,11 @@ def get_even_saturdays(start_date, end_date, existing_date_list):
                 date_list.append(reference_date)
         reference_date += timedelta(days=7)
     return date_list
+
+def update_assigned_holiday_list_in_employee(self, method=None):
+    if self.applicable_for == "Employee":
+        if self.holiday_list and self.assigned_to:
+            employee_doc = frappe.get_doc("Employee", self.assigned_to)
+            employee_doc.custom_assigned_holiday_list = self.holiday_list
+            employee_doc.save(ignore_permissions=True)
+            frappe.msgprint(_("Holiday List is updated in employee profile"), alert=True)

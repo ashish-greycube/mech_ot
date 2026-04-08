@@ -144,11 +144,14 @@ doc_events = {
 	"Attendance": {
 		"before_insert": "mech_ot.api.calculate_ot_hours_and_amount",
         "on_submit": "mech_ot.api.create_compensatory_leave_for_elgible_employees_attendance"
-	}
+	},
+    "Holiday List Assignment": {
+        "on_submit": "mech_ot.api.update_assigned_holiday_list_in_employee"
+    }
 }
 
 # After Migrate Hooks
-after_migrate = [
+before_migrate = [
     "mech_ot.migrate.after_migrate"
 ]
 
