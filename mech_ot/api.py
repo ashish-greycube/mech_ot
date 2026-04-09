@@ -5,6 +5,7 @@ from datetime import timedelta
 from dateutil import relativedelta
 from frappe.utils import flt, cstr, add_to_date, time_diff_in_seconds, get_datetime, formatdate, get_link_to_form, getdate
 from erpnext.setup.doctype.holiday_list.holiday_list import is_holiday
+from erpnext.setup.doctype.employee.employee import get_holiday_list_for_employee
 
 def calculate_ot_hours_and_amount(doc, method):
     """Calculate Overtime Hours and Amount for Attendance Document"""
@@ -78,47 +79,63 @@ def calculate_ot_hours_and_amount(doc, method):
             doc.custom_overtime_amount = ot_amount
 
 # ----------------------- Compensantory Leave Off Feature -------------------------
-def get_holiday_list_for_employee(employee, shift, company):
-    '''
-    Returns Holiday List Of Employee;
-    Priority: Employee > Shift Type > Company
-    '''
-    employee_holiday_list = frappe.db.get_value("Employee", employee, "holiday_list")
-    if not employee_holiday_list:
-        employee_holiday_list = frappe.db.get_value("Shift Type", shift, "holiday_list")
-        if not employee_holiday_list: 
-            employee_holiday_list = frappe.db.get_value("Company", company, "default_holiday_list")
-    return employee_holiday_list
+def check_is_attendance_is_on_holiday(self, method=None):
+    is_holiday_attendance = False
+    if self.employee and self.attendance_date and self.status not in ["Absent", "On Leave"]:
+        employee_holiday_list = get_holiday_list_for_employee(self.employee)
+        is_holiday_attendance = is_holiday(employee_holiday_list, self.attendance_date)
+
+    return is_holiday_attendance
+
+def check_for_working_hours_for_holiday_attendance(self, method=None):
+    is_holiday_attendance = check_is_attendance_is_on_holiday(self)
+    if is_holiday_attendance: 
+        mark_auto_attendance_on_holidays = frappe.db.get_value("Shift Type", self.shift, "mark_auto_attendance_on_holidays")
+        employee_category = frappe.db.get_value("Employee", self.employee, "custom_category")
+        settings = frappe.get_doc("Mech Attendance Settings")
+        if mark_auto_attendance_on_holidays == 1 and employee_category == settings.employee_category:
+            if self.working_hours and self.working_hours > 6 and self.working_hours < 8:
+                print("Before Working Hours", self.working_hours, self.status)
+                self.custom_actual_working_hours = self.working_hours
+                print("After Custom Working Hours", self.working_hours)
+                shift_type = frappe.db.get_value("Employee", self.employee, "default_shift")
+                self.working_hours = frappe.db.get_value("Shift Type", shift_type, "working_hours_threshold_for_half_day")
+                self.status = "Present"
+                print("After Working Hours", self.working_hours, self.status)
 
 def create_compensatory_leave_for_elgible_employees_attendance(self, method=None):
     settings = frappe.get_doc("Mech Attendance Settings")
-    if self.employee and self.attendance_date and self.status not in ["Absent", "On Leave"]:
-        employee_holiday_list = get_holiday_list_for_employee(self.employee, self.shift, self.company)
+    is_holiday_attendance = check_is_attendance_is_on_holiday(self)
+    if is_holiday_attendance: 
+        mark_auto_attendance_on_holidays = frappe.db.get_value("Shift Type", self.shift, "mark_auto_attendance_on_holidays")
+        employee_category = frappe.db.get_value("Employee", self.employee, "custom_category")
 
-        is_holiday_attendance = is_holiday(employee_holiday_list, self.attendance_date)
-        if is_holiday_attendance: 
-            mark_auto_attendance_on_holidays = frappe.db.get_value("Shift Type", self.shift, "mark_auto_attendance_on_holidays")
-            employee_category = frappe.db.get_value("Employee", self.employee, "custom_category")
+        if mark_auto_attendance_on_holidays == 1 and employee_category == settings.employee_category:
+            new_compensatory_leave_balance = 0
+            if self.working_hours and self.working_hours >= settings.minimum_hours_required_for_half_day_compensatory_off and self.working_hours < settings.minimum_hours_required_for_full_day_compensatory_off:
+                new_compensatory_leave_balance = 0.5
+            elif self.working_hours and self.working_hours >= settings.minimum_hours_required_for_full_day_compensatory_off:
+                new_compensatory_leave_balance = 1
 
-            if mark_auto_attendance_on_holidays == 1 and employee_category == settings.employee_category:
-                new_compensatory_leave_balance = 0
-                if self.working_hours and self.working_hours >= settings.minimum_hours_required_for_half_day_compensatory_off and self.working_hours < settings.minimum_hours_required_for_full_day_compensatory_off:
-                    new_compensatory_leave_balance = 0.5
-                elif self.working_hours and self.working_hours >= settings.minimum_hours_required_for_full_day_compensatory_off:
-                    new_compensatory_leave_balance = 1
+            if new_compensatory_leave_balance > 0:
+                compensatory_doc = frappe.new_doc("Compensatory Leave Request")
+                compensatory_doc.employee = self.employee
+                compensatory_doc.department = self.department
+                compensatory_doc.work_from_date = self.attendance_date
+                compensatory_doc.work_end_date = self.attendance_date
+                compensatory_doc.leave_type = settings.default_compensatory_off_leave_type
+                compensatory_doc.reason = "Worked On Holiday\nDetails:\nAttendance: {0}\nWorking Hours: {1}".format(self.name, self.working_hours)
+                
+                if new_compensatory_leave_balance == 0.5:
+                    compensatory_doc.half_day = 1
+                    compensatory_doc.half_day_date = self.attendance_date
 
-                if new_compensatory_leave_balance > 0:
-                    compensatory_doc = frappe.new_doc("Compensatory Leave Request")
-                    compensatory_doc.employee = self.employee
-                    compensatory_doc.department = self.department
-                    compensatory_doc.work_from_date = self.attendance_date
-                    compensatory_doc.work_end_date = self.attendance_date
-                    compensatory_doc.leave_type = settings.default_compensatory_off_leave_type
-                    compensatory_doc.reason = "Worked On Holiday\nDetails:\nAttendance: {0}\nWorking Hours: {1}".format(self.name, self.working_hours)
+                compensatory_doc.save(ignore_permissions=True)
+                compensatory_doc.submit()
+                frappe.msgprint("Compensatory Leave Request Is Created {0}".format(get_link_to_form("Compensatory Leave Request", compensatory_doc.name)))
 
-                    compensatory_doc.save(ignore_permissions=True)
-                    compensatory_doc.submit()
-                    frappe.msgprint("Compensatory Leave Request Is Created {0}".format(get_link_to_form("Compensatory Leave Request", compensatory_doc.name)))
+                if self.custom_actual_working_hours != 0 and self.custom_actual_working_hours > 0:
+                    frappe.db.set_value("Attendance", self.name, "working_hours", self.custom_actual_working_hours)
 
 @frappe.whitelist()
 def add_saturday_weekoffs(holiday_list, holiday_type, start_date, end_date):

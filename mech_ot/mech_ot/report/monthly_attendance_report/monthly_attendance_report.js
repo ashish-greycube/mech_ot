@@ -90,4 +90,15 @@ frappe.query_reports["Monthly Attendance Report"] = {
 		}
 		return value;
 	},
+
+	onload: function () {
+		frappe.call({
+			method: "mech_ot.mech_ot.report.monthly_attendance_report.monthly_attendance_report.set_employee_filter_on_load",
+			callback: function (res) {
+				if (res != {}) {
+					frappe.query_report.set_filter_value("employee", res.message)
+				}
+			}
+		})
+	}
 };

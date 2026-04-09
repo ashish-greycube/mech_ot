@@ -174,6 +174,17 @@ def after_migrate():
                 read_only=1,
                 insert_after="custom_overtime_rate"
             ),
+            dict(
+                is_custom_field=1,
+                is_system_generated=0,
+                fieldtype="Float",
+                label="Actual Working Hours",
+                fieldname="custom_actual_working_hours",
+                read_only=1,
+                insert_after="working_hours",
+                hidden=1
+            ),
+
         ]  
     }
 

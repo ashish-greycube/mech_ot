@@ -519,6 +519,13 @@ def get_data(filters):
 	leaves = frappe.db.get_all( "Leave Type", {}, pluck="name" )
 
 	# Reference Report Data
+	if frappe.session.user != "Administrator":
+		roles = frappe.get_roles(frappe.session.user)
+		if "HR Manager" not in roles and "HR User" not in roles:
+			employee = frappe.db.get_value("Employee", {"user_id": frappe.session.user}, "name")
+			if employee != None:
+				filters.update({"employee" : employee})
+				
 	data = get_monthly_attendance_sheet_report_data(filters)
 	data = data[1]
 	
@@ -536,7 +543,7 @@ def get_data(filters):
 
 	for d in employee_times:
 		employee_times_map[d['employee']+ "-" +str(int(frappe.utils.getdate(d['attendance_date']).strftime('%d')))] = d
-	print(employee_times_map)
+	# print(employee_times_map)
 	# For Each Employee Finding Daywise Map + Assigning Status 
 	for d in data:
 		for col in d:
@@ -757,7 +764,7 @@ def get_data(filters):
 			# Updating Total Hours Row
 			total_working_seconds = 0
 			if d['working_hours']:
-				print( d['working_hours'], d['employee'])
+				# print( d['working_hours'], d['employee'])
 				working_hours = int(d['working_hours'])
 				working_minute_in_percentage_format = (d['working_hours'] - working_hours) * 100
 				working_minute = frappe.utils.cint(((working_minute_in_percentage_format*60)/100))
@@ -775,9 +782,9 @@ def get_data(filters):
 			sts_row[day] = d['status']
 			if d['status'] == "L":
 				attendance_date = "{0}-{1}-{2}".format(frappe.utils.getdate(filters.get("to_date")).strftime("%Y"), frappe.utils.getdate(filters.get("to_date")).strftime("%m"), day)
-				leave_application = frappe.db.get_value("Leave Application", {"employee": d['employee'], "from_date": attendance_date}, "name")
-				if leave_application:
-					leave_type = frappe.db.get_value("Leave Application", leave_application, "leave_type")
+				attendance = frappe.db.get_value("Attendance", {"employee": d['employee'], "attendance_date": attendance_date}, "name")
+				if attendance:
+					leave_type = frappe.db.get_value("Attendance", attendance, "leave_type")
 					if leave_type:
 						abbreviation = frappe.db.get_value("Leave Type", leave_type, "custom_abbreviation")
 						sts_row[day] = abbreviation
@@ -912,3 +919,11 @@ def check_for_offshift_attendance(employee, filters, day, logtype):
 			})
 	# print(result)
 	return result
+
+@frappe.whitelist()
+def set_employee_filter_on_load():
+	employee = None
+	if frappe.session.user != "Administrator":
+		employee = frappe.db.get_value("Employee", {"user_id": frappe.session.user}, "name")
+		
+	return employee

@@ -143,6 +143,7 @@ jinja = {
 doc_events = {
 	"Attendance": {
 		"before_insert": "mech_ot.api.calculate_ot_hours_and_amount",
+        "validate": "mech_ot.api.check_for_working_hours_for_holiday_attendance",
         "on_submit": "mech_ot.api.create_compensatory_leave_for_elgible_employees_attendance"
 	},
     "Holiday List Assignment": {
