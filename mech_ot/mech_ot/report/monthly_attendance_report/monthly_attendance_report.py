@@ -498,7 +498,7 @@ def get_leaves_counts_of_employees(filters):
 		for employee in employees:
 			leaves = frappe.db.sql(
 				'''
-				SELECT leave_type, count(name) as "count"
+				SELECT leave_type, SUM(total_leave_days) as "count"
 				FROM `tabLeave Application`
 				WHERE from_date BETWEEN "{1}" AND "{0}"
 				AND to_date BETWEEN "{1}" AND "{0}"
@@ -600,8 +600,13 @@ def get_data(filters):
 
 			# d[col] = employee_times_map[d['employee']+ "-" +col] if d['employee']+ "-" +col in employee_times_map else no_attendance_dict
 			d[col] = attendance_dict if attendance_dict != {} else no_attendance_dict
+			print(attendance_dict, status)
 			if 'status' in attendance_dict and attendance_dict.status == "Present":
 				st = "P"
+				if status != st:
+					status = st
+			elif 'status' in attendance_dict and attendance_dict.status == "Half Day":
+				st = "HD"
 				if status != st:
 					status = st
 			d[col]['status'] = status or alternate_status
