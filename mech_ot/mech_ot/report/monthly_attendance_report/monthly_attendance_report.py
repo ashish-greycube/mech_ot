@@ -609,6 +609,10 @@ def get_data(filters):
 				st = "HD"
 				if status != st:
 					status = st
+				attendance_date = "{0}-{1}-{2}".format(frappe.utils.getdate(filters.get("to_date")).strftime("%Y"), frappe.utils.getdate(filters.get("to_date")).strftime("%m"), col)
+				other_half_status = check_for_other_half_leave_status(attendance_date, d['employee'])
+				if other_half_status != None:
+					status = "{0}/{1}".format(status, other_half_status)
 			d[col]['status'] = status or alternate_status
 
 	# Converting Data Into Employee Wise Dict
@@ -932,3 +936,25 @@ def set_employee_filter_on_load():
 		employee = frappe.db.get_value("Employee", {"user_id": frappe.session.user}, "name")
 		
 	return employee
+
+def check_for_other_half_leave_status(attendance_date, employee):
+	abbr = None
+	if attendance_date:
+		at = frappe.db.get_value("Attendance", {
+						"employee" : employee,
+						"attendance_date": attendance_date
+					}, ["name"])
+		if at:
+			doc = frappe.get_doc("Attendance", at)
+			if doc and (doc.leave_type != None or doc.leave_type != ""):
+				abbr = frappe.db.get_value("Leave Type", doc.leave_type, "custom_abbreviation")
+			else:
+				leave_application = frappe.db.get_value("Leave Application", {
+					"employee" : employee,
+					"from_date": attendance_date
+				}, ["name"])
+				if leave_application:
+					leave_application_doc = frappe.get_doc("Leave Application", leave_application)
+					if leave_application_doc:
+						abbr = frappe.db.get_value("Leave Type", leave_application_doc.leave_type, "custom_abbreviation")
+	return abbr
