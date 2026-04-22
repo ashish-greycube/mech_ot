@@ -1,7 +1,7 @@
 // Copyright (c) 2026, GreyCube Technologies and contributors
 // For license information, please see license.txt
 
-frappe.query_reports["Componentry Off Report"] = {
+frappe.query_reports["Compensatory Off Report"] = {
 	"filters": [
 		{
 			"fieldname": "from_date",

@@ -1,4 +1,5 @@
 {
+ "app": "mech_ot",
  "charts": [],
  "content": "[{\"id\":\"p7CxeZ53Ev\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Mech OT</span>\",\"col\":12}},{\"id\":\"AuRLnFXhlo\",\"type\":\"card\",\"data\":{\"card_name\":\"Settings\",\"col\":4}},{\"id\":\"AMeEA7oszW\",\"type\":\"card\",\"data\":{\"card_name\":\"Overtime\",\"col\":4}},{\"id\":\"9dec5oPR17\",\"type\":\"card\",\"data\":{\"card_name\":\"Report\",\"col\":4}}]",
  "creation": "2026-02-20 16:19:00.774025",
@@ -73,9 +74,9 @@
   {
    "hidden": 0,
    "is_query_report": 1,
-   "label": "Componentry Off Report",
+   "label": "Compensatory Off",
    "link_count": 0,
-   "link_to": "Componentry Off Report",
+   "link_to": "Compensatory Off Report",
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
@@ -103,7 +104,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-02-20 17:16:54.676038",
+ "modified": "2026-04-22 09:26:05.484933",
  "modified_by": "Administrator",
  "module": "Mech OT",
  "name": "Mech OT",
@@ -115,5 +116,6 @@
  "roles": [],
  "sequence_id": 43.0,
  "shortcuts": [],
- "title": "Mech OT"
+ "title": "Mech OT",
+ "type": "Workspace"
 }
