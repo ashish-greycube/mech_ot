@@ -806,6 +806,7 @@ def get_data(filters):
 			elif d['status'] == "HD":
 				sts_row['total'] = sts_row['total'] + 0.5
 				sts_row['total_days_present'] = sts_row['total_days_present'] + 0.5
+				sts_row['total_days_absent'] = sts_row['total_days_absent'] + 0.5
 			elif d['status'] in ["A", "L"]:
 				sts_row['total_days_absent'] = sts_row['total_days_absent'] + 1
 			elif d['status'] == "HP":
