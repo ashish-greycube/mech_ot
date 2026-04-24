@@ -192,3 +192,10 @@ def update_assigned_holiday_list_in_employee(self, method=None):
             employee_doc.custom_assigned_holiday_list = self.holiday_list
             employee_doc.save(ignore_permissions=True)
             frappe.msgprint(_("Holiday List is updated in employee profile"), alert=True)
+
+def validate_minimum_leave_days_on_save(self, method=None):
+    if self.leave_type and self.total_leave_days:
+        min_leave_allowed_per_application = frappe.db.get_value("Leave Type", self.leave_type, "custom_minimum_consecutive_leaves_allowed")
+        if min_leave_allowed_per_application and min_leave_allowed_per_application > 0:
+            if self.total_leave_days < min_leave_allowed_per_application:
+                frappe.throw("Leave of type <b>{0}</b> should be minimum of <b>{1}</b> days.".format(self.leave_type, min_leave_allowed_per_application))

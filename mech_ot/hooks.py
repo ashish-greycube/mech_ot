@@ -148,6 +148,9 @@ doc_events = {
 	},
     "Holiday List Assignment": {
         "on_submit": "mech_ot.api.update_assigned_holiday_list_in_employee"
+    },
+    "Leave Application": {
+        "validate": "mech_ot.api.validate_minimum_leave_days_on_save"
     }
 }
 

@@ -34,6 +34,14 @@ def after_migrate():
             dict(
                 is_custom_field=1,
                 is_system_generated=0,
+                fieldtype="Int",
+                label="Minimum Consecutive Leaves Allowed",
+                fieldname="custom_minimum_consecutive_leaves_allowed",
+                insert_after="applicable_after"
+            ),
+            dict(
+                is_custom_field=1,
+                is_system_generated=0,
                 fieldtype="Data",
                 label="Abbreviation",
                 fieldname="custom_abbreviation",
