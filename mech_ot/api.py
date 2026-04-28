@@ -134,7 +134,7 @@ def create_compensatory_leave_for_elgible_employees_attendance(self, method=None
                 compensatory_doc.submit()
                 frappe.msgprint("Compensatory Leave Request Is Created {0}".format(get_link_to_form("Compensatory Leave Request", compensatory_doc.name)))
 
-                if self.custom_actual_working_hours != 0 and self.custom_actual_working_hours > 0:
+                if self.custom_actual_working_hours != None and self.custom_actual_working_hours != 0 and self.custom_actual_working_hours > 0:
                     frappe.db.set_value("Attendance", self.name, "working_hours", self.custom_actual_working_hours)
 
 @frappe.whitelist()
