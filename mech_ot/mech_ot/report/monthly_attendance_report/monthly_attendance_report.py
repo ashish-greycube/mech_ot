@@ -15,11 +15,22 @@ def execute(filters=None):
 	columns, data = [], []
 	columns = get_columns(filters)
 	data = get_data(filters)
+	count = 1
+	for row in data:
+		if "employee" in row.keys():
+			row.update({"sr_no": count})
+			count += 1
 	message = "Time Format For In-Time, Out-Time, Last CheckIn & Early Exit Is <b><i>HH:MM:SS</i></b>"
 	return columns, data, message
 
 def get_columns(filters):
 	columns = [
+		{
+			'fieldname' : 'sr_no',
+			'fieldtype' : 'Data',
+			'label' : _('SR No'),
+			'width' : 50,
+		},
 		{
 			'fieldname' : 'employee',
 			'fieldtype' : 'Link',
@@ -600,7 +611,7 @@ def get_data(filters):
 
 			# d[col] = employee_times_map[d['employee']+ "-" +col] if d['employee']+ "-" +col in employee_times_map else no_attendance_dict
 			d[col] = attendance_dict if attendance_dict != {} else no_attendance_dict
-			print(attendance_dict, status)
+			# print(attendance_dict, status)
 			if 'status' in attendance_dict and attendance_dict.status == "Present":
 				st = "P"
 				if status != st:
@@ -725,7 +736,7 @@ def get_data(filters):
 		attendance_month_holidays = []
 		attendance_month_holidays_map = {}
 		for d in report_output[out]:
-				
+
 			# Change Status To HP Or WOP If Present On Holiday Or Weekend.
 			current_emp = None
 			# print(d)
@@ -860,6 +871,15 @@ def get_data(filters):
 			else:
 				early_exit_row[day] = "-"
 
+			# Checking For Worker Type To Shift WOP/HP Work Hours To OT
+			if sts_row[day] in ["HP", "WOP"] and sts_row['category'] == "Worker":
+				# Shift Working Hours to OT Hours & Add In Total OT
+				ot_row[day] = ot_row[day] + d['working_hours']
+				ot_row['total'] = round(ot_row['total'] + d['working_hours'], 2)
+
+				# Remove Total Hours From Day + Total
+				hrs_row['total'] = round(hrs_row['total'] - d['working_hours'], 2)
+				hrs_row[day] = 0			
 			# Moving to Next Day
 			day = day + 1
 
