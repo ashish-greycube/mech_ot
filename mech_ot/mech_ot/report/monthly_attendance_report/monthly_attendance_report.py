@@ -874,8 +874,9 @@ def get_data(filters):
 			# Checking For Worker Type To Shift WOP/HP Work Hours To OT
 			if sts_row[day] in ["HP", "WOP"] and sts_row['category'] == "Worker":
 				# Shift Working Hours to OT Hours & Add In Total OT
-				ot_row[day] = ot_row[day] + d['working_hours']
-				ot_row['total'] = round(ot_row['total'] + d['working_hours'], 2)
+				ot_row[day] = round(ot_row[day] + d['working_hours'], 1)
+				ot_row['total'] = round(ot_row['total'] + d['working_hours'], 1)
+				sts_row['total_ot_hours'] = round(sts_row['total_ot_hours'] + d['working_hours'], 1)
 
 				# Remove Total Hours From Day + Total
 				hrs_row['total'] = round(hrs_row['total'] - d['working_hours'], 2)
