@@ -199,3 +199,17 @@ def validate_minimum_leave_days_on_save(self, method=None):
         if min_leave_allowed_per_application and min_leave_allowed_per_application > 0:
             if self.total_leave_days < min_leave_allowed_per_application:
                 frappe.throw("Leave of type <b>{0}</b> should be minimum of <b>{1}</b> days.".format(self.leave_type, min_leave_allowed_per_application))
+
+def on_validate_set_hr_module_if_user_has_employee(self, method=None):
+    if self.email:
+        modules_to_remove = []
+        user_roles = frappe.get_roles(self.name or self.email)
+        if user_roles:
+            if "Employee" in user_roles:
+                for bloked_module in self.block_modules:
+                    if bloked_module.module in ["HR", "Payroll"] :
+                        modules_to_remove.append(bloked_module)
+                
+                if len(modules_to_remove) > 0:
+                    for id in modules_to_remove:
+                        self.remove(id)

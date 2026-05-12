@@ -151,6 +151,9 @@ doc_events = {
     },
     "Leave Application": {
         "validate": "mech_ot.api.validate_minimum_leave_days_on_save"
+    },
+    "User": {
+        "validate": "mech_ot.api.on_validate_set_hr_module_if_user_has_employee"
     }
 }
 
