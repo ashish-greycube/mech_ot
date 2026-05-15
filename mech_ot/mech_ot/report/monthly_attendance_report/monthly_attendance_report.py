@@ -70,59 +70,59 @@ def get_columns(filters):
 			'fieldname' : frappe.utils.cstr(i),
 			'fieldtype' : 'Data',
 			'label' : "{0} {1}".format(day, dayname),
-			'width' : 100,
+			'width' : 80,
 		}
 		columns.append(col)
 		i = i + 1
 	
 	columns.extend([
-		{
-			'fieldname' : 'total',
-			'fieldtype' : 'Data',
-			'label' : _('Total'),
-			'width' : 130,
-		},
+		# {
+		# 	'fieldname' : 'total',
+		# 	'fieldtype' : 'Data',
+		# 	'label' : _('Total'),
+		# 	'width' : 130,
+		# },
 		{
 			'fieldname' : 'total_days_present',
 			'fieldtype' : 'Data',
-			'label' : _('Present Days'),
-			'width' : 150,
-		},
-		{
-			'fieldname' : 'total_days_absent',
-			'fieldtype' : 'Data',
-			'label' : _('Absent Days'),
-			'width' : 150,
+			'label' : _('P'),
+			'width' : 80,
 		},
 		{
 			'fieldname' : 'total_ot_hours',
 			'fieldtype' : 'Data',
-			'label' : _('OT Hours'),
-			'width' : 150,
+			'label' : _('OT'),
+			'width' : 80,
+		},
+		{
+			'fieldname' : 'total_days_absent',
+			'fieldtype' : 'Data',
+			'label' : _('AB'),
+			'width' : 80,
 		},
 		{
 			'fieldname' : 'total_weekly_off',
 			'fieldtype' : 'Data',
-			'label' : _('Weekly Off'),
-			'width' : 150,
+			'label' : _('WO'),
+			'width' : 80,
 		},
 		{
 			'fieldname' : 'total_holidays',
 			'fieldtype' : 'Data',
-			'label' : _('Holidays'),
-			'width' : 150,
+			'label' : _('PH'),
+			'width' : 80,
 		},
 		{
 			'fieldname' : 'total_holidays_present',
 			'fieldtype' : 'Data',
-			'label' : _('Holidays Present'),
-			'width' : 150,
+			'label' : _('PHP'),
+			'width' : 80,
 		},
 		{
 			'fieldname' : 'total_weekoff_present',
 			'fieldtype' : 'Data',
-			'label' : _('Week Off Present'),
-			'width' : 150,
+			'label' : _('WOP'),
+			'width' : 80,
 		},
 	])
 
@@ -133,28 +133,33 @@ def get_columns(filters):
 		order_by = "name DESC"
 	)
 	casual = leaves.remove("Casual Leave")
-	leaves.insert(0, "Casual Leave")
+	coff = leaves.remove("Compensatory Off")
+	privilege = leaves.remove("Privilege Leave")
+	leaves.insert(0, "Compensatory Off")
+	leaves.insert(1, "Casual Leave")
+	leaves.insert(2, "Privilege Leave")
 	
 	for leave in leaves:
+		intials = frappe.db.get_value("Leave Type", leave, "custom_abbreviation") or "".join([word[0] for word in leave.split()])
 		columns.append({
 			'fieldname' : leave.lower().replace(" ", "_"),
 			'fieldtype' : 'Data',
-			'label' : "{0}".format(leave),
-			'width' : 180,
+			'label' : "{0}".format(intials),
+			'width' : 80,
 		})
 
-	columns.append({
-		'fieldname' : "total_days_on_leave",
-		'fieldtype' : 'Data',
-		'label' : "Total Days On Leave",
-		'width' : 180,
-	})
+	# columns.append({
+	# 	'fieldname' : "total_days_on_leave",
+	# 	'fieldtype' : 'Data',
+	# 	'label' : "Total Days On Leave",
+	# 	'width' : 180,
+	# })
 
 	columns.append({
 		'fieldname' : "total_paid_days",
 		'fieldtype' : 'Data',
-		'label' : "Total Paid Days",
-		'width' : 120,
+		'label' : "TPD",
+		'width' : 80,
 	})
 
 	return columns
