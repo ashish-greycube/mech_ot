@@ -1,11 +1,12 @@
 import frappe
+import erpnext
 import calendar
 from frappe import _
 from datetime import timedelta
 from dateutil import relativedelta
-from frappe.utils import flt, cstr, add_to_date, time_diff_in_seconds, get_datetime, formatdate, get_link_to_form, getdate
 from erpnext.setup.doctype.holiday_list.holiday_list import is_holiday
 from erpnext.setup.doctype.employee.employee import get_holiday_list_for_employee
+from frappe.utils import flt, cstr, add_to_date, time_diff_in_seconds, get_datetime, formatdate, get_link_to_form, getdate
 
 def calculate_ot_hours_and_amount(doc, method):
     """Calculate Overtime Hours and Amount for Attendance Document"""
@@ -78,7 +79,7 @@ def calculate_ot_hours_and_amount(doc, method):
             doc.custom_overtime_rate = ot_rate
             doc.custom_overtime_amount = ot_amount
 
-# ----------------------- Compensantory Leave Off Feature -------------------------
+# Compensatory Leave Customization  -----------------------------------------------------------------------------------------------------------------------------------------------------------
 def check_is_attendance_is_on_holiday(self, method=None):
     is_holiday_attendance = False
     if self.employee and self.attendance_date and self.status not in ["Absent", "On Leave"]:
@@ -137,6 +138,8 @@ def create_compensatory_leave_for_elgible_employees_attendance(self, method=None
                 if self.custom_actual_working_hours != None and self.custom_actual_working_hours != 0 and self.custom_actual_working_hours > 0:
                     frappe.db.set_value("Attendance", self.name, "working_hours", self.custom_actual_working_hours)
 
+
+# Holiday List Customization  -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 @frappe.whitelist()
 def add_saturday_weekoffs(holiday_list, holiday_type, start_date, end_date):
     self = frappe.get_doc("Holiday List", holiday_list)
@@ -193,6 +196,8 @@ def update_assigned_holiday_list_in_employee(self, method=None):
             employee_doc.save(ignore_permissions=True)
             frappe.msgprint(_("Holiday List is updated in employee profile"), alert=True)
 
+
+# Minimum Leave Validation Customization  ------------------------------------------------------------------------------------------------------------------------------------------------------
 def validate_minimum_leave_days_on_save(self, method=None):
     if self.leave_type and self.total_leave_days:
         min_leave_allowed_per_application = frappe.db.get_value("Leave Type", self.leave_type, "custom_minimum_consecutive_leaves_allowed")
@@ -200,6 +205,8 @@ def validate_minimum_leave_days_on_save(self, method=None):
             if self.total_leave_days < min_leave_allowed_per_application:
                 frappe.throw("Leave of type <b>{0}</b> should be minimum of <b>{1}</b> days.".format(self.leave_type, min_leave_allowed_per_application))
 
+
+# User Doctype Module Customization  -----------------------------------------------------------------------------------------------------------------------------------------------------------
 def on_validate_set_hr_module_if_user_has_employee(self, method=None):
     if self.email:
         modules_to_remove = []
@@ -213,3 +220,70 @@ def on_validate_set_hr_module_if_user_has_employee(self, method=None):
                 if len(modules_to_remove) > 0:
                     for id in modules_to_remove:
                         self.remove(id)
+
+
+# Short Leave (GatePass Customization) ---------------------------------------------------------------------------------------------------------------------------------------------------------
+@frappe.whitelist()
+def allocate_short_leaves_every_month():
+    active_employees = frappe.db.get_all(
+        doctype = "Employee",
+        filters = {"status": "Active"},
+        pluck = "name"
+    )
+    if active_employees and len(active_employees) > 0:
+        leave_type = frappe.db.get_single_value("Mech Attendance Settings", "default_short_leave_type")
+        if not leave_type:
+            frappe.log_error(title = "Short Leave Allocation Failed", message = "Default Short Leave Type is not set in Mech Attendance Settings")
+            return
+        
+        company = erpnext.get_default_company()
+
+        from_date = frappe.utils.get_first_day(frappe.utils.today())
+        to_date = frappe.utils.get_last_day(frappe.utils.today())
+
+        for employee in active_employees:
+            doc = frappe.new_doc("Leave Allocation")
+            doc.employee = employee
+            doc.company = company or 'MECHWELL INDUSTRIES LIMITED'
+            doc.leave_type = leave_type
+            doc.from_date = from_date
+            doc.to_date = to_date
+            doc.new_leaves_allocated = 1
+            doc.save(ignore_permissions=True)
+            doc.submit()
+
+def validate_short_leave_application(self, method=None):
+    short_leave_type = frappe.db.get_single_value("Mech Attendance Settings", "default_short_leave_type")
+    if short_leave_type != None and self.leave_type == short_leave_type:
+        # Set Leave Application as Half Day + Update Total Levae Count
+        self.half_day = 1
+        self.total_leave_days = 0.5
+
+        # Attendance must exists for the date being applied
+        isAttendanceCreated = frappe.db.get_value(
+            doctype = "Attendance",
+            filters = {"attendance_date": self.from_date, "employee": self.employee},
+            fieldname = "name"
+        )
+        if not isAttendanceCreated:
+            frappe.throw("No attendance is created for date {0}".format(self.from_date))
+            return
+
+        # If attendance found validate it's Status & Working Hours
+        employee_default_shift = frappe.db.get_value("Employee", self.employee, "default_shift")
+        shift_working_hours = frappe.db.get_value("Shift Type", employee_default_shift, "custom_shift_actual_working_hours")
+        if shift_working_hours <= 0:
+            shift_working_hours = frappe.utils.time_diff_in_hours(frappe.db.get_value("Shift Type", employee_default_shift, "end_time"), frappe.db.get_value("Shift Type", employee_default_shift, "start_time"))
+
+        expected_working_hrs = shift_working_hours - 2
+        attendance_doc = frappe.get_doc("Attendance", isAttendanceCreated)
+        if attendance_doc:
+            if attendance_doc.status != "Half Day":
+                frappe.throw(_("Cannot apply for Short Leave because attendance on {0} is {1}. Short Leave is only applicable for attendance with status <b>Half Day</b>").format(
+                    frappe.utils.getdate(self.from_date).strftime("%d/%m/%Y"), attendance_doc.status
+                ))
+
+            if attendance_doc.working_hours < expected_working_hrs:
+                frappe.throw(_("Short Leave cannot be applied. Your working hours on {0} ({1} hrs) are less than the required {2} hrs.").format(
+                    frappe.utils.getdate(self.from_date).strftime("%d/%m/%Y"), attendance_doc.working_hours, expected_working_hrs
+                ))

@@ -43,7 +43,10 @@ app_license = "mit"
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-doctype_js = {"Holiday List" : "public/js/holiday_list.js"}
+doctype_js = {
+                "Holiday List" : "public/js/holiday_list.js", 
+                "Leave Application":"public/js/leave_application.js"
+            }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -150,7 +153,7 @@ doc_events = {
         "on_submit": "mech_ot.api.update_assigned_holiday_list_in_employee"
     },
     "Leave Application": {
-        "validate": "mech_ot.api.validate_minimum_leave_days_on_save"
+        "validate": ["mech_ot.api.validate_minimum_leave_days_on_save", "mech_ot.api.validate_short_leave_application"]
     },
     "User": {
         "validate": "mech_ot.api.on_validate_set_hr_module_if_user_has_employee"
@@ -166,23 +169,11 @@ before_migrate = [
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"mech_ot.tasks.all"
-# 	],
-# 	"daily": [
-# 		"mech_ot.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"mech_ot.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"mech_ot.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"mech_ot.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+	"cron": {
+		"0 1 1 * *" : ["mech_ot.api.allocate_short_leaves_every_month"]
+    }
+}
 
 # Testing
 # -------

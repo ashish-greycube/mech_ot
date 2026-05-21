@@ -5,13 +5,16 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "html_knwb",
   "section_break_afzd",
   "default_compensatory_off_leave_type",
   "minimum_hours_required_for_half_day_compensatory_off",
   "column_break_gnff",
   "employee_category",
-  "minimum_hours_required_for_full_day_compensatory_off"
+  "minimum_hours_required_for_full_day_compensatory_off",
+  "notes_section",
+  "html_knwb",
+  "gate_pass_application_section",
+  "default_short_leave_type"
  ],
  "fields": [
   {
@@ -54,14 +57,33 @@
   },
   {
    "fieldname": "section_break_afzd",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "hide_border": 1,
+   "label": "Compensatory Off"
+  },
+  {
+   "fieldname": "notes_section",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "gate_pass_application_section",
+   "fieldtype": "Section Break",
+   "label": "Gate Pass Application"
+  },
+  {
+   "fieldname": "default_short_leave_type",
+   "fieldtype": "Link",
+   "label": "Default Short Leave Type",
+   "options": "Leave Type",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-01-16 11:34:03.976100",
+ "modified": "2026-05-20 12:24:45.068778",
  "modified_by": "Administrator",
  "module": "Mech OT",
  "name": "Mech Attendance Settings",
