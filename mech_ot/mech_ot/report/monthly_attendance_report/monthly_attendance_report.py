@@ -8,6 +8,7 @@ import datetime
 from frappe.utils import cint, cstr, getdate
 from frappe.utils.nestedset import get_descendants_of
 from frappe.query_builder.functions import Extract
+from erpnext.setup.doctype.employee.employee import get_holiday_list_for_employee
 
 def execute(filters=None):
 	if not filters: 
@@ -583,7 +584,11 @@ def get_data(filters):
 			alternate_status = ""
 			
 			if getdate(f"{attendance_year}-{attendance_month}-{col}") < getdate():
-				alternate_status = "A"
+				attendance_month_holidays, attendance_month_holidays_map = get_holidays_of_this_month(d['employee'], filters.get("from_date"), filters.get("to_date"))
+				if getdate(f"{attendance_year}-{attendance_month}-{col}") in attendance_month_holidays:
+					alternate_status = "WO" if attendance_month_holidays_map[getdate(f"{attendance_year}-{attendance_month}-{col}")] == 1 else "H"
+				else:
+					alternate_status = "A"
 			else:
 				alternate_status = ""
 			attendance_dict = {}	
@@ -616,7 +621,7 @@ def get_data(filters):
 
 			# d[col] = employee_times_map[d['employee']+ "-" +col] if d['employee']+ "-" +col in employee_times_map else no_attendance_dict
 			d[col] = attendance_dict if attendance_dict != {} else no_attendance_dict
-			# print(attendance_dict, status)
+			print(d['employee'], attendance_dict, status)
 			if 'status' in attendance_dict and attendance_dict.status == "Present":
 				st = "P"
 				if status != st:
@@ -748,6 +753,7 @@ def get_data(filters):
 			if 'employee' in d and d['employee'] != current_emp:
 				current_emp = d['employee']
 				attendance_month_holidays, attendance_month_holidays_map = get_holidays_of_this_month(current_emp, filters.get("from_date"), filters.get("to_date"))
+				# print(attendance_month_holidays, attendance_month_holidays_map, current_emp)
 				if attendance_month_holidays and attendance_month_holidays_map:
 					if 'attendance_date' in d and d['attendance_date'] in attendance_month_holidays and d['status'] == "P":
 						d['status'] = "WOP" if attendance_month_holidays_map[d['attendance_date']] == 1 else "HP"
@@ -920,7 +926,7 @@ def get_holidays_of_this_month(emp, from_date, to_date):
 	leave_date_type_map = {}
 	leave_dates = []
 	if emp:
-		employee_holiday_list = frappe.db.get_value("Employee", emp, "holiday_list")
+		employee_holiday_list = get_holiday_list_for_employee(emp)
 		if employee_holiday_list:
 			doc = frappe.get_doc("Holiday List", employee_holiday_list)
 			for holiday in doc.holidays:
