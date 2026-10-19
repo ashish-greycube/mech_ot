@@ -15,7 +15,7 @@ frappe.query_reports["Monthly Attendance Report"] = {
 			fieldname: 'from_date',
 			fieldtype: 'Date',
 			label: __('From Date'),
-			default: new Date(date.getFullYear(), date.getMonth(), 1),
+			default: frappe.datetime.month_start(),
 			on_change: function () {
 				date = new Date(frappe.query_report.get_filter_value("from_date"));
 				days = daysInMonth(date.getFullYear(), date.getMonth())
